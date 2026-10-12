@@ -1,0 +1,50 @@
+name: CI/CD Tienda Perritos - Frontend
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/cicd-tienda-frontend.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy-frontend-ec2:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v3
+
+    - name: Copiar archivos frontend a EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_FRONTEND_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "frontend/*"
+        target: "/home/ubuntu/tienda-frontend"
+
+    - name: Limpiar y desplegar frontend en EC2
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_FRONTEND_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          set -e
+          #  Eliminar solo el contenedor e imagen del frontend
+          sudo docker stop tienda-frontend || true
+          sudo docker rm tienda-frontend || true
+          sudo docker rmi tienda-frontend:latest || true
+
+          #  Instalar Docker si no está
+          sudo apt-get update -y
+          sudo apt-get install -y docker.io
+
+          #  Construir imagen desde Dockerfile
+          cd /home/ubuntu/tienda-frontend
+          sudo docker build -t tienda-frontend .
+
+          #  Levantar contenedor nuevo en puerto 80
+          sudo docker run -d --restart unless-stopped --name tienda-frontend -p 80:80 tienda-frontend:latest

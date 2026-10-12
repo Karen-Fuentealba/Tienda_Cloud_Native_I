@@ -1,0 +1,54 @@
+name: CI/CD Tienda Perritos - DB
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "db/**"
+      - ".github/workflows/cicd-tienda-db.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy-db-ec2:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v3
+
+    - name: Copiar archivos DB a EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_BACKEND_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "db/*"
+        target: "/home/ubuntu/tienda-db"
+
+    - name: Limpiar y desplegar DB en EC2
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_BACKEND_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          set -e
+          #  Eliminar solo el contenedor e imagen de la DB
+          sudo docker stop tienda-db || true
+          sudo docker rm tienda-db || true
+          sudo docker rmi tienda-db:latest || true
+
+          #  Instalar Docker si no está
+          sudo apt-get update -y
+          sudo apt-get install -y docker.io
+
+          #  Construir imagen MySQL desde Dockerfile
+          cd /home/ubuntu/tienda-db
+          sudo docker build -t tienda-db .
+
+          #  Levantar contenedor nuevo con volumen persistente
+          sudo docker run -d --restart unless-stopped --name tienda-db -p 3306:3306 \
+            -v dbdata:/var/lib/mysql \
+            -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e MYSQL_DATABASE=tienda_perritos \
+            tienda-db:latest
