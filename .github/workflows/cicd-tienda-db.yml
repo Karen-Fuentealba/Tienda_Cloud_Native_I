@@ -32,12 +32,8 @@ jobs:
           sudo docker stop tienda-db || true
           sudo docker rm tienda-db || true
           sudo docker rmi tienda-db:latest || true
-
-          #  Instalar Docker si no está
-          sudo apt-get update -y
-          sudo apt-get install -y docker.io
-
-          #  Construir imagen MySQL desde Dockerfile
+          
+          # Construir imagen MySQL desde Dockerfile
           cd /home/ubuntu/tienda-db
           sudo docker build -t tienda-db .
 
