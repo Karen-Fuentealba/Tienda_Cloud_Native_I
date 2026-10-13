@@ -32,11 +32,11 @@ jobs:
           sudo docker stop tienda-backend || true
           sudo docker rm tienda-backend || true
           sudo docker rmi tienda-backend:latest || true
-        
+
           #  Construir imagen desde Dockerfile
           cd /home/ubuntu/tienda-backend/backend
           sudo docker build -t tienda-backend .
-        
+
           #  Levantar contenedor nuevo
           sudo docker run -d --restart unless-stopped --name tienda-backend -p 3001:3001 \
             -e AAD_TENANT_ID=${{ secrets.INTERNAL_TENANT_ID }} \
