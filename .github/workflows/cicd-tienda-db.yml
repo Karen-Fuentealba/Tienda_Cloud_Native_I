@@ -1,11 +1,6 @@
 name: CI/CD Tienda Perritos - DB
 
 on:
-# push:
-#    branches: [ "main" ]
-#    paths:
-#      - "db/**"
-#      - ".github/workflows/cicd-tienda-db.yml"
   workflow_dispatch:
 
 jobs:
