@@ -33,13 +33,9 @@ jobs:
           sudo docker rm tienda-frontend || true
           sudo docker rmi tienda-frontend:latest || true
 
-          #  Instalar Docker si no está
-          sudo apt-get update -y
-          sudo apt-get install -y docker.io
-
           #  Construir imagen desde Dockerfile
-          cd /home/ubuntu/tienda-frontend
-          sudo docker build -t tienda-frontend .
+          cd /home/ubuntu/tienda-frontend/frontend
+          sudo docker build -t tienda-frontend -f Dockerfile .
 
           #  Levantar contenedor nuevo en puerto 80
           sudo docker run -d --restart unless-stopped --name tienda-frontend -p 80:80 \
