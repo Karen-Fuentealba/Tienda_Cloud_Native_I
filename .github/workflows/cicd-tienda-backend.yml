@@ -19,8 +19,8 @@ jobs:
     - name: Copiar archivos backend a EC2
       uses: appleboy/scp-action@v0.1.7
       with:
-        host: ${{ secrets.EC2_BACKEND_HOST }}
-        username: ubuntu
+        host: ${{ secrets.EC2_HOST_BACKEND_DB }}
+        username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         source: "backend/*"
         target: "/home/ubuntu/tienda-backend"
@@ -28,8 +28,8 @@ jobs:
     - name: Limpiar y desplegar backend en EC2
       uses: appleboy/ssh-action@v0.1.10
       with:
-        host: ${{ secrets.EC2_BACKEND_HOST }}
-        username: ubuntu
+        host: ${{ secrets.EC2_HOST_BACKEND_DB }}
+        username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           set -e
@@ -47,7 +47,7 @@ jobs:
           sudo docker build -t tienda-backend .
 
           #  Levantar contenedor nuevo
-          sudo docker run -d --restart unless-stopped --name tienda-backend -p 3001:3001 \
-            -e AAD_TENANT_ID=${{ secrets.AAD_TENANT_ID }} \
-            -e AAD_AUDIENCE=${{ secrets.AAD_AUDIENCE }} \
-            tienda-backend:latest
+          # sudo docker run -d --restart unless-stopped --name tienda-backend -p 3001:3001 \
+          #  -e AAD_TENANT_ID=${{ secrets.AAD_TENANT_ID }} \
+          #  -e AAD_AUDIENCE=${{ secrets.AAD_AUDIENCE }} \
+          #  tienda-backend:latest
