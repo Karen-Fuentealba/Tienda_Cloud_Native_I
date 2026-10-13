@@ -36,6 +36,8 @@ jobs:
           # Construir imagen MySQL desde Dockerfile
           cd /home/ubuntu/tienda-db
           sudo docker build -t tienda-db .
+          cd /home/ubuntu/tienda-db
+          ls -l 
 
           # Levantar contenedor nuevo con volumen persistente
           sudo docker run -d --restart unless-stopped --name tienda-db -p 3306:3306 \
