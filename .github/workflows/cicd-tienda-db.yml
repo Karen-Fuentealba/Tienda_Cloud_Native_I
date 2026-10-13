@@ -19,8 +19,8 @@ jobs:
     - name: Copiar archivos DB a EC2
       uses: appleboy/scp-action@v0.1.7
       with:
-        host: ${{ secrets.EC2_BACKEND_HOST }}
-        username: ubuntu
+        host: ${{ secrets.EC2_HOST_BACKEND_DB }}
+        username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         source: "db/*"
         target: "/home/ubuntu/tienda-db"
@@ -28,8 +28,8 @@ jobs:
     - name: Limpiar y desplegar DB en EC2
       uses: appleboy/ssh-action@v0.1.10
       with:
-        host: ${{ secrets.EC2_BACKEND_HOST }}
-        username: ubuntu
+        host: ${{ secrets.EC2_HOST_BACKEND_DB }}
+        username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           set -e
