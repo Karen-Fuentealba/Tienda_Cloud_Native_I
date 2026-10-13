@@ -33,12 +33,8 @@ jobs:
           sudo docker rm tienda-backend || true
           sudo docker rmi tienda-backend:latest || true
 
-          #  Instalar Docker si no está
-          sudo apt-get update -y
-          sudo apt-get install -y docker.io
-
           #  Construir imagen desde Dockerfile
-          cd /home/ubuntu/tienda-backend
+          cd /home/ubuntu/tienda-backend/backend
           sudo docker build -t tienda-backend .
 
           #  Levantar contenedor nuevo
