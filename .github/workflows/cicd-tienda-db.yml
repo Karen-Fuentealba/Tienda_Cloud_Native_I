@@ -35,7 +35,6 @@ jobs:
 
           # Construir imagen MySQL desde Dockerfile
           cd /home/ubuntu/tienda-db/db
-          ls -l 
           sudo docker build -t tienda-db .
         
 
