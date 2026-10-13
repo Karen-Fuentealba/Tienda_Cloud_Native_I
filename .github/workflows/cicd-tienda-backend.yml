@@ -39,6 +39,6 @@ jobs:
 
           #  Levantar contenedor nuevo
           sudo docker run -d --restart unless-stopped --name tienda-backend -p 3001:3001 \
-            -e AAD_TENANT_ID=${{ secrets.INTERNAL_TENANT_ID }} \
-            -e AAD_AUDIENCE=${{ secrets.INTERNAL_AUDIENCE }} \
-            tienda-backend:latest
+          -e AAD_TENANT_ID=${{ secrets.INTERNAL_TENANT_ID }} \
+          -e AAD_AUDIENCE=${{ secrets.INTERNAL_AUDIENCE }} \
+          tienda-backend:latest
