@@ -4,8 +4,10 @@ const authConfig = {
       auth: {
         clientId: "9c61f329-5d50-41a9-be4d-557d53935f70",
         authority: "https://login.microsoftonline.com/ea6b8b9d-33ce-49ad-95e6-551bce054fe7",
-        redirectUri: window.location.origin,
-        postLogoutRedirectUri: window.location.origin,
+        redirectUri: "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod/",
+        //redirectUri: window.location.origin,
+        postLogoutRedirectUri: "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod/",
+        // window.location.origin,
       },
       cache: {
         cacheLocation: "localStorage",
