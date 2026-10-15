@@ -2,11 +2,15 @@
  * Frontend simple para CRUD de productos de la tienda de perritos.
  */
 
-const API_BASE = "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod";
+// Determinar la URL base de la API según el host
+// frontend/app.js
 
+//const API_BASE = "/api/productos";
+
+const API_BASE = "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod/";
 const PRODUCTOS_API = `${API_BASE}/api/productos`;
 const PEDIDOS_API   = `${API_BASE}/api/pedidos`;
-const HEALTH_API    = `${API_BASE}/api/health`;
+
 
 let editandoId = null;
 
@@ -42,7 +46,7 @@ const cartTotal = document.getElementById("cartTotal");
 const cartToast = document.getElementById("cartToast");
 const btnConfirmarCompra = document.getElementById("btnConfirmarCompra");
 const btnVaciarCarrito = document.getElementById("btnVaciarCarrito");
-//const PEDIDOS_API = "/api/pedidos";
+const PEDIDOS_API = "/api/pedidos";
 
 let catalogoActual = [];
 let carrito = [];
