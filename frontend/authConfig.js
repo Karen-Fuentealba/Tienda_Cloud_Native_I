@@ -24,8 +24,11 @@ const authConfig = {
         clientId: "a64dfa50-28aa-4285-b102-9d60c5d30f45",
         authority: "https://karen004v.ciamlogin.com/b5253255-4e61-4557-bf3f-661f8dc60447",
         knownAuthorities: ["karen004v.ciamlogin.com"],
-        redirectUri: window.location.origin,
-        postLogoutRedirectUri: window.location.origin,
+        redirectUri: "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod/",
+      //  redirectUri: window.location.origin,
+        
+        postLogoutRedirectUri: "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod/",
+      // window.location.origin,
       },
       cache: {
         cacheLocation: "localStorage",
