@@ -46,7 +46,6 @@ const cartTotal = document.getElementById("cartTotal");
 const cartToast = document.getElementById("cartToast");
 const btnConfirmarCompra = document.getElementById("btnConfirmarCompra");
 const btnVaciarCarrito = document.getElementById("btnVaciarCarrito");
-const PEDIDOS_API = "/api/pedidos";
 
 let catalogoActual = [];
 let carrito = [];
