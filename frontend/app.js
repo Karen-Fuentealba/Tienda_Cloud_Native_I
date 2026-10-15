@@ -1,438 +1,441 @@
 /**
- * Frontend completo para CRUD de productos y gestión de sesiones.
+ * Frontend simple para CRUD de productos de la tienda de perritos.
  */
 
-document.addEventListener("DOMContentLoaded", () => {
-  const API_BASE = "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod";
-  const PRODUCTOS_API = `${API_BASE}/api/productos`;
-  const PEDIDOS_API   = `${API_BASE}/api/pedidos`;
-  const HEALTH_API    = `${API_BASE}/api/health`;
+const API_BASE = "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod";
 
-  let editandoId = null;
-  let carrito = [];
+const PRODUCTOS_API = `${API_BASE}/api/productos`;
+const PEDIDOS_API   = `${API_BASE}/api/pedidos`;
+const HEALTH_API    = `${API_BASE}/api/health`;
 
-  // Referencias a elementos del DOM
-  const tbody = document.getElementById("tbodyProductos");
-  const btnCargar = document.getElementById("btnCargar");
-  const btnGuardar = document.getElementById("btnGuardar");
-  const btnCancelar = document.getElementById("btnCancelar");
-  const formTitle = document.getElementById("formTitle");
-  const statusDiv = document.getElementById("status");
+let editandoId = null;
 
-  const inputNombre = document.getElementById("nombre");
-  const inputDescripcion = document.getElementById("descripcion");
-  const inputPrecio = document.getElementById("precio");
-  const inputStock = document.getElementById("stock");
+const tbody = document.getElementById("tbodyProductos");
+const btnCargar = document.getElementById("btnCargar");
+const btnGuardar = document.getElementById("btnGuardar");
+const btnCancelar = document.getElementById("btnCancelar");
+const formTitle = document.getElementById("formTitle");
+const statusDiv = document.getElementById("status");
 
-  const accessView = document.getElementById("accessView");
-  const accessStatus = document.getElementById("accessStatus");
-  const appView = document.getElementById("appView");
+const inputNombre = document.getElementById("nombre");
+const inputDescripcion = document.getElementById("descripcion");
+const inputPrecio = document.getElementById("precio");
+const inputStock = document.getElementById("stock");
+const accessView = document.getElementById("accessView");
+const accessStatus = document.getElementById("accessStatus");
+const appView = document.getElementById("appView");
+const btnIniciarSesionAdmin = document.getElementById("btnIniciarSesionAdmin");
+const btnIniciarSesionCliente = document.getElementById("btnIniciarSesionCliente");
+const btnCerrarSesion = document.getElementById("btnCerrarSesion");
+const sessionIdentity = document.getElementById("sessionIdentity");
+const clientView = document.getElementById("clientView");
+const tbodyCatalogo = document.getElementById("tbodyCatalogo");
+const tbodyPedidos = document.getElementById("tbodyPedidos");
+const clienteStatus = document.getElementById("clienteStatus");
+const cartWidget = document.getElementById("cartWidget");
+const btnCarrito = document.getElementById("btnCarrito");
+const cartPanel = document.getElementById("cartPanel");
+const cartCount = document.getElementById("cartCount");
+const cartItems = document.getElementById("cartItems");
+const cartEmpty = document.getElementById("cartEmpty");
+const cartTotal = document.getElementById("cartTotal");
+const cartToast = document.getElementById("cartToast");
+const btnConfirmarCompra = document.getElementById("btnConfirmarCompra");
+const btnVaciarCarrito = document.getElementById("btnVaciarCarrito");
+//const PEDIDOS_API = "/api/pedidos";
 
-  const btnIniciarSesionAdmin = document.getElementById("btnIniciarSesionAdmin");
-  const btnIniciarSesionCliente = document.getElementById("btnIniciarSesionCliente");
-  const btnCerrarSesion = document.getElementById("btnCerrarSesion");
+let catalogoActual = [];
+let carrito = [];
+let cartToastTimer = null;
 
-  const sessionIdentity = document.getElementById("sessionIdentity");
-  const clientView = document.getElementById("clientView");
-  const tbodyCatalogo = document.getElementById("tbodyCatalogo");
-  const tbodyPedidos = document.getElementById("tbodyPedidos");
-  const clienteStatus = document.getElementById("clienteStatus");
+async function apiFetch(url, options = {}) {
+  const accessToken = await authService.obtenerTokenDeAcceso();
+  const headers = new Headers(options.headers || {});
+  headers.set("Authorization", `Bearer ${accessToken}`);
+  return fetch(url, { ...options, headers });
+}
 
-  // Carrito avanzado
-  const cartWidget = document.getElementById("cartWidget");
-  const btnCarrito = document.getElementById("btnCarrito");
-  const cartPanel = document.getElementById("cartPanel");
-  const cartCount = document.getElementById("cartCount");
-  const cartItems = document.getElementById("cartItems");
-  const cartEmpty = document.getElementById("cartEmpty");
-  const cartTotal = document.getElementById("cartTotal");
-  const cartToast = document.getElementById("cartToast");
-  const btnConfirmarCompra = document.getElementById("btnConfirmarCompra");
-  const btnVaciarCarrito = document.getElementById("btnVaciarCarrito");
-  // Inicializar autenticación
-  async function iniciarAplicacion() {
-    try {
-      await authService.inicializarAutenticacion();
-      accessStatus.textContent = "Sesión inicializada correctamente.";
-      cargarProductos();
-      cargarCatalogo();
-    } catch (err) {
-      accessStatus.textContent = "Error al inicializar sesión.";
-      console.error("No se pudo inicializar la autenticación:", err);
+function setStatus(mensaje, tipo = "ok") {
+  statusDiv.textContent = mensaje;
+  statusDiv.className = "status " + tipo;
+}
+
+function setClienteStatus(mensaje, tipo = "ok") {
+  clienteStatus.textContent = mensaje;
+  clienteStatus.className = "status " + tipo;
+}
+
+function setAccessStatus(mensaje, tipo = "error") {
+  accessStatus.textContent = mensaje;
+  accessStatus.className = "status " + tipo;
+}
+
+async function cargarProductos() {
+  try {
+    const res = await apiFetch(API_BASE);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || `Error al cargar productos (${res.status}).`);
     }
+    const data = await res.json();
+    renderProductos(data);
+    setStatus("Productos cargados correctamente.", "ok");
+  } catch (err) {
+    console.error(err);
+    setStatus(`No se pudieron cargar los productos: ${err.message}`, "error");
   }
+}
 
-  // Login administrador
-  btnIniciarSesionAdmin.addEventListener("click", async () => {
-    btnIniciarSesionAdmin.disabled = true;
-    try {
-      await authService.iniciarSesion("admin");
-      sessionIdentity.textContent = "Administrador conectado";
-      accessView.style.display = "none";
-      appView.style.display = "block";
-      cargarProductos();
-    } catch (err) {
-      console.error("Error login admin:", err);
-    } finally {
-      btnIniciarSesionAdmin.disabled = false;
-    }
+function renderProductos(productos) {
+  tbody.innerHTML = "";
+  productos.forEach((p) => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${p.id}</td>
+      <td>${p.nombre}</td>
+      <td>${p.descripcion || ""}</td>
+      <td>$${Number(p.precio).toFixed(2)}</td>
+      <td>${p.stock}</td>
+      <td>
+        <button data-id="${p.id}" class="btn-editar">Editar</button>
+        <button data-id="${p.id}" class="btn-eliminar danger">Eliminar</button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
   });
 
-  // Login cliente
-  btnIniciarSesionCliente.addEventListener("click", async () => {
-    btnIniciarSesionCliente.disabled = true;
-    try {
-      await authService.iniciarSesion("cliente");
-      sessionIdentity.textContent = "Cliente conectado";
-      accessView.style.display = "none";
-      clientView.style.display = "block";
-      cargarCatalogo();
-      cargarPedidos();
-    } catch (err) {
-      console.error("Error login cliente:", err);
-    } finally {
-      btnIniciarSesionCliente.disabled = false;
-    }
-  });
-
-  // Cerrar sesión
-  btnCerrarSesion.addEventListener("click", async () => {
-    try {
-      await authService.cerrarSesion();
-      accessView.style.display = "block";
-      appView.style.display = "none";
-      clientView.style.display = "none";
-      sessionIdentity.textContent = "";
-      accessStatus.textContent = "Sesión cerrada.";
-    } catch (err) {
-      console.error("Error al cerrar sesión:", err);
-    }
-  });
-  // Cargar productos desde la API
-  async function cargarProductos() {
-    try {
-      const token = await authService.obtenerTokenDeAcceso();
-      const response = await fetch(PRODUCTOS_API, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const productos = await response.json();
-      renderProductos(productos);
-    } catch (err) {
-      console.error("Error al cargar productos:", err);
-    }
-  }
-
-  // Renderizar productos en la tabla de administración
-  function renderProductos(productos) {
-    tbody.innerHTML = "";
-    productos.forEach((p) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${p.id}</td>
-        <td>${p.nombre}</td>
-        <td>${p.descripcion}</td>
-        <td>${p.precio}</td>
-        <td>${p.stock}</td>
-        <td>
-          <button onclick="editarProducto(${p.id})">Editar</button>
-          <button onclick="eliminarProducto(${p.id})">Eliminar</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
+  // Asignar eventos a los botones
+  document.querySelectorAll(".btn-editar").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      editarProducto(id);
     });
-  }
+  });
 
-  // Editar producto
-  window.editarProducto = async function (id) {
-    editandoId = id;
-    try {
-      const token = await authService.obtenerTokenDeAcceso();
-      const response = await fetch(`${PRODUCTOS_API}/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const producto = await response.json();
-      inputNombre.value = producto.nombre;
-      inputDescripcion.value = producto.descripcion;
-      inputPrecio.value = producto.precio;
-      inputStock.value = producto.stock;
-      formTitle.textContent = "Editar producto";
-    } catch (err) {
-      console.error("Error al editar producto:", err);
-    }
-  };
-
-  // Eliminar producto
-  window.eliminarProducto = async function (id) {
-    try {
-      const token = await authService.obtenerTokenDeAcceso();
-      await fetch(`${PRODUCTOS_API}/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      cargarProductos();
-    } catch (err) {
-      console.error("Error al eliminar producto:", err);
-    }
-  };
-
-  // Guardar producto (crear o actualizar)
-  btnGuardar.addEventListener("click", async () => {
-    const producto = {
-      nombre: inputNombre.value,
-      descripcion: inputDescripcion.value,
-      precio: inputPrecio.value,
-      stock: inputStock.value,
-    };
-
-    try {
-      const token = await authService.obtenerTokenDeAcceso();
-      if (editandoId) {
-        await fetch(`${PRODUCTOS_API}/${editandoId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(producto),
-        });
-        editandoId = null;
-      } else {
-        await fetch(PRODUCTOS_API, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(producto),
-        });
+  document.querySelectorAll(".btn-eliminar").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      if (confirm("¿Seguro que deseas eliminar este producto?")) {
+        eliminarProducto(id);
       }
-      formTitle.textContent = "Nuevo producto";
-      inputNombre.value = "";
-      inputDescripcion.value = "";
-      inputPrecio.value = "";
-      inputStock.value = "";
-      cargarProductos();
-    } catch (err) {
-      console.error("Error al guardar producto:", err);
-    }
-  });
-
-  // Cancelar edición
-  btnCancelar.addEventListener("click", () => {
-    editandoId = null;
-    formTitle.textContent = "Nuevo producto";
-    inputNombre.value = "";
-    inputDescripcion.value = "";
-    inputPrecio.value = "";
-    inputStock.value = "";
-  });
-
-  // Botón para recargar productos
-  btnCargar.addEventListener("click", () => {
-    cargarProductos();
-  });
-  // Cargar catálogo de productos para el cliente
-  async function cargarCatalogo() {
-    try {
-      const response = await fetch(PRODUCTOS_API);
-      const productos = await response.json();
-      renderCatalogo(productos);
-    } catch (err) {
-      console.error("Error al cargar catálogo:", err);
-    }
-  }
-
-  // Renderizar catálogo en la vista cliente
-  function renderCatalogo(productos) {
-    tbodyCatalogo.innerHTML = "";
-    productos.forEach((p) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${p.nombre}</td>
-        <td>${p.descripcion}</td>
-        <td>${p.precio}</td>
-        <td>${p.stock}</td>
-        <td><button onclick="agregarAlCarrito(${p.id}, '${p.nombre}', ${p.precio})">Agregar</button></td>
-      `;
-      tbodyCatalogo.appendChild(tr);
     });
+  });
+}
+
+function renderCatalogo(productos) {
+  catalogoActual = productos;
+  tbodyCatalogo.innerHTML = "";
+  productos.forEach((producto) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${producto.nombre}</td>
+      <td>${producto.descripcion || ""}</td>
+      <td>$${Number(producto.precio).toFixed(2)}</td>
+      <td>${producto.stock}</td>
+      <td><button class="btn-comprar" data-id="${producto.id}" ${producto.stock <= 0 ? "disabled" : ""}>Comprar</button></td>
+    `;
+    tbodyCatalogo.appendChild(tr);
+  });
+
+  document.querySelectorAll(".btn-comprar").forEach((button) => {
+    button.addEventListener("click", () => agregarAlCarrito(Number(button.dataset.id)));
+  });
+}
+
+function renderPedidos(pedidos) {
+  tbodyPedidos.innerHTML = "";
+  pedidos.forEach((pedido) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${pedido.producto}</td>
+      <td>${pedido.cantidad}</td>
+      <td>$${Number(pedido.precio_unitario).toFixed(2)}</td>
+      <td>${new Date(pedido.created_at).toLocaleString()}</td>
+    `;
+    tbodyPedidos.appendChild(tr);
+  });
+}
+
+async function cargarCatalogo() {
+  try {
+    const response = await apiFetch(API_BASE);
+    if (!response.ok) throw new Error("No se pudo cargar el catálogo.");
+    renderCatalogo(await response.json());
+  } catch (error) {
+    console.error(error);
+    setClienteStatus("No se pudo cargar el catálogo.", "error");
   }
+}
 
-  // Agregar producto al carrito
-  window.agregarAlCarrito = function (id, nombre, precio) {
-    carrito.push({ id, nombre, precio });
-    renderCarrito();
-  };
+async function cargarPedidos() {
+  try {
+    const response = await apiFetch(PEDIDOS_API);
+    if (!response.ok) throw new Error("No se pudo cargar el historial.");
+    renderPedidos(await response.json());
+  } catch (error) {
+    console.error(error);
+    setClienteStatus("No se pudo cargar el historial de pedidos.", "error");
+  }
+}
 
-  // Renderizar carrito básico
-  function renderCarrito() {
-    cartWidget.innerHTML = "";
-    let total = 0;
-    carrito.forEach((item, index) => {
-      total += item.precio;
-      const div = document.createElement("div");
-      div.textContent = `${item.nombre} - $${item.precio}`;
-      const btn = document.createElement("button");
-      btn.textContent = "Quitar";
-      btn.onclick = () => {
-        carrito.splice(index, 1);
-        renderCarrito();
-      };
-      div.appendChild(btn);
-      cartWidget.appendChild(div);
-    });
+function mostrarAvisoCarrito(mensaje) {
+  cartToast.textContent = mensaje;
+  cartToast.hidden = false;
+  clearTimeout(cartToastTimer);
+  cartToastTimer = setTimeout(() => {
+    cartToast.hidden = true;
+  }, 2000);
+}
 
-    const totalDiv = document.createElement("div");
-    totalDiv.textContent = `Total: $${total}`;
-    cartWidget.appendChild(totalDiv);
+function renderCarrito() {
+  cartItems.innerHTML = "";
+  let total = 0;
+  let unidades = 0;
 
-    const confirmarBtn = document.createElement("button");
-    confirmarBtn.textContent = "Confirmar pedido";
-    confirmarBtn.onclick = confirmarPedido;
-    cartWidget.appendChild(confirmarBtn);
+  carrito.forEach((item) => {
+    total += item.precio * item.cantidad;
+    unidades += item.cantidad;
 
-    const vaciarBtn = document.createElement("button");
-    vaciarBtn.textContent = "Vaciar carrito";
-    vaciarBtn.onclick = () => {
-      carrito = [];
+    const li = document.createElement("li");
+    const detalle = document.createElement("span");
+    detalle.textContent = `${item.nombre} x${item.cantidad} - $${(item.precio * item.cantidad).toFixed(2)}`;
+    const quitar = document.createElement("button");
+    quitar.type = "button";
+    quitar.className = "danger";
+    quitar.textContent = "Quitar";
+    quitar.addEventListener("click", () => {
+      carrito = carrito.filter((producto) => producto.id !== item.id);
       renderCarrito();
-    };
-    cartWidget.appendChild(vaciarBtn);
-  }
-  // Mostrar/ocultar panel del carrito
-  btnCarrito.addEventListener("click", () => {
-    if (cartPanel.style.display === "block") {
-      cartPanel.style.display = "none";
-    } else {
-      cartPanel.style.display = "block";
-      renderCarritoPanel();
-    }
+    });
+    li.append(detalle, quitar);
+    cartItems.appendChild(li);
   });
 
-  // Renderizar carrito avanzado en el panel
-  function renderCarritoPanel() {
-    cartItems.innerHTML = "";
-    cartCount.textContent = carrito.length;
+  cartCount.textContent = String(unidades);
+  cartEmpty.hidden = carrito.length > 0;
+  cartTotal.textContent = carrito.length ? `Total: $${total.toFixed(2)}` : "";
+  btnConfirmarCompra.disabled = false;
+  btnConfirmarCompra.hidden = carrito.length === 0;
+  btnVaciarCarrito.hidden = carrito.length === 0;
+}
 
-    if (carrito.length === 0) {
-      cartEmpty.style.display = "block";
-      cartTotal.textContent = "$0";
-      return;
-    }
+function agregarAlCarrito(productId) {
+  const producto = catalogoActual.find((item) => item.id === productId);
+  if (!producto) return;
 
-    cartEmpty.style.display = "none";
-    let total = 0;
-
-    carrito.forEach((item, index) => {
-      total += item.precio;
-      const li = document.createElement("li");
-      li.textContent = `${item.nombre} - $${item.precio}`;
-      const btn = document.createElement("button");
-      btn.textContent = "Quitar";
-      btn.onclick = () => {
-        carrito.splice(index, 1);
-        renderCarritoPanel();
-        mostrarToast(`${item.nombre} eliminado del carrito`);
-      };
-      li.appendChild(btn);
-      cartItems.appendChild(li);
-    });
-
-    cartTotal.textContent = `$${total}`;
+  const existente = carrito.find((item) => item.id === productId);
+  const cantidadActual = existente ? existente.cantidad : 0;
+  if (cantidadActual + 1 > producto.stock) {
+    setClienteStatus(`No hay más stock disponible de ${producto.nombre}.`, "error");
+    return;
   }
 
-  // Toast de notificación
-  function mostrarToast(mensaje) {
-    cartToast.textContent = mensaje;
-    cartToast.style.display = "block";
-    setTimeout(() => {
-      cartToast.style.display = "none";
-    }, 2000);
+  if (existente) {
+    existente.cantidad += 1;
+  } else {
+    carrito.push({ id: producto.id, nombre: producto.nombre, precio: Number(producto.precio), cantidad: 1 });
   }
 
-  // Confirmar compra desde el panel
-  btnConfirmarCompra.addEventListener("click", async () => {
-    if (carrito.length === 0) {
-      clienteStatus.textContent = "El carrito está vacío.";
-      return;
-    }
+  setClienteStatus("", "ok");
+  renderCarrito();
+  mostrarAvisoCarrito("Producto Agregado al Carrito de Compras");
+}
 
-    const pedido = {
-      productos: carrito.map((item) => ({
-        id: item.id,
-        nombre: item.nombre,
-        precio: item.precio,
-      })),
-      total: carrito.reduce((sum, item) => sum + item.precio, 0),
-    };
+async function confirmarCompra() {
+  if (!carrito.length) return;
+  btnConfirmarCompra.disabled = true;
 
-    try {
-      const token = await authService.obtenerTokenDeAcceso();
-      await fetch(PEDIDOS_API, {
+  try {
+    for (const item of [...carrito]) {
+      const response = await apiFetch(PEDIDOS_API, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(pedido),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: item.id, quantity: item.cantidad }),
       });
-      carrito = [];
-      renderCarritoPanel();
-      clienteStatus.textContent = "Compra confirmada correctamente.";
-      cargarPedidos();
-    } catch (err) {
-      console.error("Error al confirmar compra:", err);
-      clienteStatus.textContent = "Error al confirmar compra.";
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || `No se pudo crear el pedido de ${item.nombre}.`);
+      carrito = carrito.filter((producto) => producto.id !== item.id);
     }
-  });
+    setClienteStatus("Pedido creado correctamente.", "ok");
+    cartPanel.hidden = true;
+    btnCarrito.setAttribute("aria-expanded", "false");
+  } catch (error) {
+    console.error(error);
+    setClienteStatus(error.message || "No se pudo crear el pedido.", "error");
+  } finally {
+    renderCarrito();
+    await Promise.all([cargarCatalogo(), cargarPedidos()]);
+  }
+}
 
-  // Vaciar carrito desde el panel
-  btnVaciarCarrito.addEventListener("click", () => {
-    carrito = [];
-    renderCarritoPanel();
-    mostrarToast("Carrito vaciado");
-  });
+function limpiarFormulario() {
+  editandoId = null;
+  formTitle.textContent = "Nuevo producto";
+  inputNombre.value = "";
+  inputDescripcion.value = "";
+  inputPrecio.value = "";
+  inputStock.value = "";
+}
 
-  // Cargar pedidos del cliente
-  async function cargarPedidos() {
-    try {
-      const token = await authService.obtenerTokenDeAcceso();
-      const response = await fetch(PEDIDOS_API, {
-        headers: { Authorization: `Bearer ${token}` },
+function obtenerDatosFormulario() {
+  return {
+    nombre: inputNombre.value.trim(),
+    descripcion: inputDescripcion.value.trim(),
+    precio: parseFloat(inputPrecio.value),
+    stock: parseInt(inputStock.value, 10),
+  };
+}
+
+function validarProducto(prod) {
+  if (!prod.nombre) return "El nombre es obligatorio.";
+  if (isNaN(prod.precio) || prod.precio < 0) return "El precio debe ser un número mayor o igual a 0.";
+  if (isNaN(prod.stock) || prod.stock < 0) return "El stock debe ser un número mayor o igual a 0.";
+  return null;
+}
+
+async function guardarProducto() {
+  const producto = obtenerDatosFormulario();
+  const error = validarProducto(producto);
+  if (error) {
+    setStatus(error, "error");
+    return;
+  }
+
+  try {
+    let res;
+    if (editandoId) {
+      // Actualizar
+      res = await apiFetch(`${API_BASE}/${editandoId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(producto),
       });
-      const pedidos = await response.json();
-      renderPedidos(pedidos);
-    } catch (err) {
-      console.error("Error al cargar pedidos:", err);
+    } else {
+      // Crear
+      res = await apiFetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(producto),
+      });
     }
-  }
 
-  function renderPedidos(pedidos) {
-    tbodyPedidos.innerHTML = "";
-    pedidos.forEach((p) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${p.id}</td>
-        <td>${p.fecha}</td>
-        <td>${p.estado}</td>
-        <td>${p.total}</td>
-      `;
-      tbodyPedidos.appendChild(tr);
-    });
-  }
-
-  // Health check del backend
-  async function verificarHealth() {
-    try {
-      const response = await fetch(HEALTH_API);
-      const estado = await response.json();
-      statusDiv.textContent = `Estado backend: ${estado.status}`;
-    } catch (err) {
-      console.error("Error al verificar health:", err);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || "Error al guardar el producto");
     }
-  }
 
-  // Iniciar la aplicación
-  iniciarAplicacion();
-  verificarHealth();
+    limpiarFormulario();
+    await cargarProductos();
+    setStatus(editandoId ? "Producto actualizado correctamente." : "Producto creado correctamente.", "ok");
+  } catch (err) {
+    console.error(err);
+    setStatus("Ocurrió un error al guardar el producto.", "error");
+  }
+}
+
+async function editarProducto(id) {
+  try {
+    const res = await apiFetch(`${API_BASE}/${id}`);
+    if (!res.ok) throw new Error("No se pudo obtener el producto");
+    const p = await res.json();
+    editandoId = p.id;
+    formTitle.textContent = `Editar producto #${p.id}`;
+    inputNombre.value = p.nombre;
+    inputDescripcion.value = p.descripcion || "";
+    inputPrecio.value = p.precio;
+    inputStock.value = p.stock;
+    setStatus("Editando producto.", "ok");
+  } catch (err) {
+    console.error(err);
+    setStatus("No se pudo cargar el producto para editarlo.", "error");
+  }
+}
+
+async function eliminarProducto(id) {
+  try {
+    const res = await apiFetch(`${API_BASE}/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Error al eliminar producto");
+    await cargarProductos();
+    setStatus("Producto eliminado correctamente.", "ok");
+  } catch (err) {
+    console.error(err);
+    setStatus("No se pudo eliminar el producto.", "error");
+  }
+}
+
+// Eventos
+btnCargar.addEventListener("click", cargarProductos);
+btnGuardar.addEventListener("click", guardarProducto);
+btnCancelar.addEventListener("click", () => {
+  limpiarFormulario();
+  setStatus("Edición cancelada.", "ok");
 });
+
+btnCarrito.addEventListener("click", () => {
+  cartPanel.hidden = !cartPanel.hidden;
+  btnCarrito.setAttribute("aria-expanded", String(!cartPanel.hidden));
+});
+btnConfirmarCompra.addEventListener("click", confirmarCompra);
+btnVaciarCarrito.addEventListener("click", () => {
+  carrito = [];
+  renderCarrito();
+});
+
+btnIniciarSesionAdmin.addEventListener("click", () => {
+  authService.iniciarSesion("admin").catch((error) => {
+    console.error(error);
+    setAccessStatus(`No se pudo iniciar la sesión de administrador: ${error.message}`);
+  });
+});
+
+btnIniciarSesionCliente.addEventListener("click", () => {
+  authService.iniciarSesion("cliente").catch((error) => {
+    console.error(error);
+    setAccessStatus(`No se pudo iniciar la sesión de cliente: ${error.message}`);
+  });
+});
+
+btnCerrarSesion.addEventListener("click", () => {
+  authService.cerrarSesion();
+});
+
+async function iniciarAplicacion() {
+  try {
+    const account = await authService.inicializarAutenticacion();
+    if (!account) {
+      return;
+    }
+
+    const roles = await authService.obtenerRoles();
+    const nombre = account.name || account.username || "Usuario";
+    accessView.hidden = true;
+    btnCerrarSesion.hidden = false;
+    if (roles.includes("ADMIN")) {
+      sessionIdentity.textContent = `Administrador: ${nombre}`;
+      sessionIdentity.hidden = false;
+      appView.hidden = false;
+      await cargarProductos();
+      return;
+    }
+    if (roles.includes("CLIENTE")) {
+      sessionIdentity.textContent = `Cliente: ${nombre}`;
+      sessionIdentity.hidden = false;
+      clientView.hidden = false;
+      cartWidget.hidden = false;
+      renderCarrito();
+      await Promise.all([cargarCatalogo(), cargarPedidos()]);
+      return;
+    }
+    accessView.hidden = false;
+    btnCerrarSesion.hidden = true;
+    sessionIdentity.hidden = true;
+  } catch (error) {
+    console.error("No se pudo inicializar la autenticación:", error);
+    accessView.hidden = false;
+    setAccessStatus(`No se pudo completar el inicio de sesión de Azure: ${error.message}`);
+  }
+}
+
+iniciarAplicacion();
