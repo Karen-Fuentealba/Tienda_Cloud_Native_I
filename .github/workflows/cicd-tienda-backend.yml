@@ -39,7 +39,9 @@ jobs:
 
 
           # Levantar contenedor backend con variables
-          sudo docker run -d --restart unless-stopped --name tienda-backend -p 3001:3001 \
+            docker network create tienda-net
+            docker run -d --name tienda-db --network tienda-net -p 3306:3306 tienda-db:latest
+            docker run -d --name tienda-backend --network tienda-net -p 3001:3001 \
             -e DB_HOST=tienda-db \
             -e DB_USER=${{ secrets.MYSQL_USER }} \
             -e DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
