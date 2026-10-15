@@ -9,13 +9,28 @@ const { createOrderRoutes } = require("./routes/orders");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const {
+/*const {
   DB_HOST = "db",
   DB_USER = "alumno",
   DB_PASSWORD = "alumno123",
   DB_NAME = "tienda_perritos",
   DB_PORT = 3306,
+} = process.env; */
+
+const {
+  MYSQL_HOST = "db",
+  MYSQL_USER = "admindb",
+  MYSQL_PASSWORD = "admin123",
+  MYSQL_DATABASE = "tienda_perritos",
+  MYSQL_PORT = 3306,
 } = process.env;
+
+const DB_HOST = MYSQL_HOST;
+const DB_USER = MYSQL_USER;
+const DB_PASSWORD = MYSQL_PASSWORD;
+const DB_NAME = MYSQL_DATABASE;
+const DB_PORT = MYSQL_PORT;
+
 
 app.use(cors());
 app.use(express.json());
