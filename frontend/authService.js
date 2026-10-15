@@ -1,9 +1,11 @@
 const accessTokenKey = "tienda-perritos.accessToken";
 const identityProviderKey = "tienda-perritos.identityProvider";
+
 const msalInstances = {
   admin: new msal.PublicClientApplication(authConfig.admin.msal),
   cliente: new msal.PublicClientApplication(authConfig.cliente.msal),
 };
+
 const initializationPromises = {};
 
 function obtenerProveedor() {
@@ -66,10 +68,19 @@ async function iniciarSesion(proveedor) {
   localStorage.setItem(identityProviderKey, proveedor);
   const msalInstance = obtenerInstancia(proveedor);
   await inicializarMsal(proveedor);
-  return msalInstance.loginRedirect({
-    ...authConfig[proveedor].loginRequest,
-    prompt: "login",
-  });
+
+  try {
+    return await msalInstance.loginRedirect({
+      ...authConfig[proveedor].loginRequest,
+      prompt: "login",
+    });
+  } catch (error) {
+    if (error.errorCode === "interaction_in_progress") {
+      console.warn(`Ya hay un login en curso para ${proveedor}, espera a que termine.`);
+      return null;
+    }
+    throw error;
+  }
 }
 
 async function obtenerTokenDeAcceso() {
@@ -90,7 +101,15 @@ async function obtenerTokenDeAcceso() {
     return response.accessToken;
   } catch (error) {
     if (error instanceof msal.InteractionRequiredAuthError) {
-      await msalInstance.acquireTokenRedirect(authConfig[proveedor].loginRequest);
+      try {
+        await msalInstance.acquireTokenRedirect(authConfig[proveedor].loginRequest);
+      } catch (err) {
+        if (err.errorCode === "interaction_in_progress") {
+          console.warn(`Ya hay una interacción en progreso para ${proveedor}, espera a que termine.`);
+          return null;
+        }
+        throw err;
+      }
     }
     throw error;
   }
@@ -116,7 +135,11 @@ async function obtenerRoles() {
   const accessToken = await obtenerTokenDeAcceso();
   const payload = accessToken.split(".")[1];
   const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-  const claims = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(base64), (character) => character.charCodeAt(0))));
+  const claims = JSON.parse(
+    new TextDecoder().decode(
+      Uint8Array.from(atob(base64), (character) => character.charCodeAt(0))
+    )
+  );
   return Array.isArray(claims.roles) ? claims.roles : [];
 }
 
