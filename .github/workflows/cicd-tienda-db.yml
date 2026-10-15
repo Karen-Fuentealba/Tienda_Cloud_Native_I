@@ -36,12 +36,13 @@ jobs:
           # Construir imagen MySQL desde Dockerfile
           cd /home/ubuntu/tienda-db/db
           sudo docker build -t tienda-db .
-        
+          
           sudo docker run -d --restart unless-stopped --name tienda-db -p 3306:3306 \
             -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
             -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
             -e MYSQL_USER=${{ secrets.MYSQL_USER }} \
             -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-            mysql:8.0
+            tienda-db:latest
+
 
 
