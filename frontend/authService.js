@@ -1,11 +1,9 @@
 const accessTokenKey = "tienda-perritos.accessToken";
 const identityProviderKey = "tienda-perritos.identityProvider";
-
 const msalInstances = {
   admin: new msal.PublicClientApplication(authConfig.admin.msal),
   cliente: new msal.PublicClientApplication(authConfig.cliente.msal),
 };
-
 const initializationPromises = {};
 
 function obtenerProveedor() {
@@ -39,8 +37,6 @@ async function inicializarAutenticacion() {
   const proveedor = obtenerProveedor();
   const msalInstance = obtenerInstancia(proveedor);
   await inicializarMsal(proveedor);
-
-  // Procesar cualquier login pendiente
   const redirectResponse = await msalInstance.handleRedirectPromise();
   let account = redirectResponse?.account || obtenerCuentaActiva(msalInstance);
 
@@ -50,7 +46,6 @@ async function inicializarAutenticacion() {
     return account;
   }
 
-  // Buscar cuentas en otros proveedores
   for (const proveedorAlternativo of Object.keys(msalInstances)) {
     if (proveedorAlternativo === proveedor) continue;
 
@@ -71,27 +66,10 @@ async function iniciarSesion(proveedor) {
   localStorage.setItem(identityProviderKey, proveedor);
   const msalInstance = obtenerInstancia(proveedor);
   await inicializarMsal(proveedor);
-
-  try {
-    const response = await msalInstance.loginPopup(authConfig[proveedor].loginRequest);
-    msalInstance.setActiveAccount(response.account);
-
-    // Guardar token
-    const tokenResponse = await msalInstance.acquireTokenSilent({
-      ...authConfig[proveedor].loginRequest,
-      account: response.account,
-    });
-    guardarToken(tokenResponse.accessToken);
-
-    return response.account;
-  } catch (error) {
-    if (error.errorCode === "interaction_in_progress") {
-      console.warn(`Ya hay un login en curso para ${proveedor}, espera a que termine.`);
-      return null;
-    }
-    console.error(`Error en login ${proveedor}:`, error);
-    throw error;
-  }
+  return msalInstance.loginRedirect({
+    ...authConfig[proveedor].loginRequest,
+    prompt: "login",
+  });
 }
 
 async function obtenerTokenDeAcceso() {
@@ -112,17 +90,7 @@ async function obtenerTokenDeAcceso() {
     return response.accessToken;
   } catch (error) {
     if (error instanceof msal.InteractionRequiredAuthError) {
-      try {
-        const popupResponse = await msalInstance.acquireTokenPopup(authConfig[proveedor].loginRequest);
-        guardarToken(popupResponse.accessToken);
-        return popupResponse.accessToken;
-      } catch (err) {
-        if (err.errorCode === "interaction_in_progress") {
-          console.warn(`Ya hay una interacción en progreso para ${proveedor}, espera a que termine.`);
-          return null;
-        }
-        throw err;
-      }
+      await msalInstance.acquireTokenRedirect(authConfig[proveedor].loginRequest);
     }
     throw error;
   }
@@ -148,11 +116,7 @@ async function obtenerRoles() {
   const accessToken = await obtenerTokenDeAcceso();
   const payload = accessToken.split(".")[1];
   const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-  const claims = JSON.parse(
-    new TextDecoder().decode(
-      Uint8Array.from(atob(base64), (character) => character.charCodeAt(0))
-    )
-  );
+  const claims = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(base64), (character) => character.charCodeAt(0))));
   return Array.isArray(claims.roles) ? claims.roles : [];
 }
 
