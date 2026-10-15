@@ -2,161 +2,99 @@
  * Frontend simple para CRUD de productos de la tienda de perritos.
  */
 
-const API_BASE = "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod";
-const PRODUCTOS_API = `${API_BASE}/api/productos`;
-const PEDIDOS_API   = `${API_BASE}/api/pedidos`;
-const HEALTH_API    = `${API_BASE}/api/health`;
+document.addEventListener("DOMContentLoaded", () => {
+  const API_BASE = "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod";
+  const PRODUCTOS_API = `${API_BASE}/api/productos`;
+  const PEDIDOS_API   = `${API_BASE}/api/pedidos`;
+  const HEALTH_API    = `${API_BASE}/api/health`;
 
-let editandoId = null;
+  let editandoId = null;
 
-const tbody = document.querySelector("#productosTable tbody");
-const form = document.querySelector("#productoForm");
-const btnIniciarSesionAdmin = document.getElementById("btnIniciarSesionAdmin");
-const btnIniciarSesionCliente = document.getElementById("btnIniciarSesionCliente");
+  const tbody = document.querySelector("#productosTable tbody");
+  const form = document.querySelector("#productoForm");
+  const btnIniciarSesionAdmin = document.getElementById("btnIniciarSesionAdmin");
+  const btnIniciarSesionCliente = document.getElementById("btnIniciarSesionCliente");
 
-// Inicializar autenticación al cargar la aplicación
-async function iniciarAplicacion() {
-  try {
-    await authService.inicializarAutenticacion();
-    console.log("Autenticación inicializada correctamente.");
-    cargarProductos();
-  } catch (err) {
-    console.error("No se pudo inicializar la autenticación:", err);
-  }
-}
-
-// Manejo de login administrador
-btnIniciarSesionAdmin.addEventListener("click", async () => {
-  btnIniciarSesionAdmin.disabled = true;
-  try {
-    await authService.iniciarSesion("admin");
-    console.log("Sesión administrador iniciada.");
-  } catch (err) {
-    if (err?.errorCode === "interaction_in_progress") {
-      console.warn("Ya hay un login en curso para administrador.");
-    } else {
-      console.error("No se pudo iniciar la sesión de administrador:", err);
+  // Inicializar autenticación al cargar la aplicación
+  async function iniciarAplicacion() {
+    try {
+      await authService.inicializarAutenticacion();
+      console.log("Autenticación inicializada correctamente.");
+      cargarProductos();
+    } catch (err) {
+      console.error("No se pudo inicializar la autenticación:", err);
     }
-  } finally {
-    btnIniciarSesionAdmin.disabled = false;
   }
-});
 
-// Manejo de login cliente
-btnIniciarSesionCliente.addEventListener("click", async () => {
-  btnIniciarSesionCliente.disabled = true;
-  try {
-    await authService.iniciarSesion("cliente");
-    console.log("Sesión cliente iniciada.");
-  } catch (err) {
-    if (err?.errorCode === "interaction_in_progress") {
-      console.warn("Ya hay un login en curso para cliente.");
-    } else {
-      console.error("No se pudo iniciar la sesión de cliente:", err);
+  // Manejo de login administrador
+  btnIniciarSesionAdmin.addEventListener("click", async () => {
+    btnIniciarSesionAdmin.disabled = true;
+    try {
+      await authService.iniciarSesion("admin");
+      console.log("Sesión administrador iniciada.");
+    } catch (err) {
+      if (err?.errorCode === "interaction_in_progress") {
+        console.warn("Ya hay un login en curso para administrador.");
+      } else {
+        console.error("No se pudo iniciar la sesión de administrador:", err);
+      }
+    } finally {
+      btnIniciarSesionAdmin.disabled = false;
     }
-  } finally {
-    btnIniciarSesionCliente.disabled = false;
-  }
-});
-
-// Función para cargar productos
-async function cargarProductos() {
-  try {
-    const token = await authService.obtenerTokenDeAcceso();
-    const response = await fetch(PRODUCTOS_API, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const productos = await response.json();
-    renderProductos(productos);
-  } catch (err) {
-    console.error("Error al cargar productos:", err);
-  }
-}
-
-// Renderizar productos en la tabla
-function renderProductos(productos) {
-  tbody.innerHTML = "";
-  productos.forEach((p) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${p.id}</td>
-      <td>${p.nombre}</td>
-      <td>${p.precio}</td>
-      <td>
-        <button onclick="editarProducto(${p.id})">Editar</button>
-        <button onclick="eliminarProducto(${p.id})">Eliminar</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
   });
-}
 
-// Editar producto
-async function editarProducto(id) {
-  editandoId = id;
-  try {
-    const token = await authService.obtenerTokenDeAcceso();
-    const response = await fetch(`${PRODUCTOS_API}/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const producto = await response.json();
-    form.nombre.value = producto.nombre;
-    form.precio.value = producto.precio;
-  } catch (err) {
-    console.error("Error al editar producto:", err);
-  }
-}
-
-// Eliminar producto
-async function eliminarProducto(id) {
-  try {
-    const token = await authService.obtenerTokenDeAcceso();
-    await fetch(`${PRODUCTOS_API}/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    cargarProductos();
-  } catch (err) {
-    console.error("Error al eliminar producto:", err);
-  }
-}
-
-// Guardar producto (crear o actualizar)
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const producto = {
-    nombre: form.nombre.value,
-    precio: form.precio.value,
-  };
-
-  try {
-    const token = await authService.obtenerTokenDeAcceso();
-    if (editandoId) {
-      await fetch(`${PRODUCTOS_API}/${editandoId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(producto),
-      });
-      editandoId = null;
-    } else {
-      await fetch(PRODUCTOS_API, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(producto),
-      });
+  // Manejo de login cliente
+  btnIniciarSesionCliente.addEventListener("click", async () => {
+    btnIniciarSesionCliente.disabled = true;
+    try {
+      await authService.iniciarSesion("cliente");
+      console.log("Sesión cliente iniciada.");
+    } catch (err) {
+      if (err?.errorCode === "interaction_in_progress") {
+        console.warn("Ya hay un login en curso para cliente.");
+      } else {
+        console.error("No se pudo iniciar la sesión de cliente:", err);
+      }
+    } finally {
+      btnIniciarSesionCliente.disabled = false;
     }
-    form.reset();
-    cargarProductos();
-  } catch (err) {
-    console.error("Error al guardar producto:", err);
-  }
-});
+  });
 
-// Iniciar la aplicación
-iniciarAplicacion();
+  // Función para cargar productos
+  async function cargarProductos() {
+    try {
+      const token = await authService.obtenerTokenDeAcceso();
+      const response = await fetch(PRODUCTOS_API, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const productos = await response.json();
+      renderProductos(productos);
+    } catch (err) {
+      console.error("Error al cargar productos:", err);
+    }
+  }
+
+  // Renderizar productos en la tabla
+  function renderProductos(productos) {
+    tbody.innerHTML = "";
+    productos.forEach((p) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${p.id}</td>
+        <td>${p.nombre}</td>
+        <td>${p.precio}</td>
+        <td>
+          <button onclick="editarProducto(${p.id})">Editar</button>
+          <button onclick="eliminarProducto(${p.id})">Eliminar</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Editar producto
+  window.editarProducto = async function (id) {
+    editandoId = id;
+    try {
+      const token = await authService.obtenerTokenDeAcceso();
+      const response = await
