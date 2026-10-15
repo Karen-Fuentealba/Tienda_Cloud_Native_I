@@ -1,7 +1,8 @@
 
-const API_BASE = "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod/";
-const PRODUCTOS_API = `${API_BASE}/api/productos`;
-const PEDIDOS_API   = `${API_BASE}/api/pedidos`;
+const API_BASE = "/api/productos";
+
+// Ejemplo: const API_BASE = "http://34.202.142.177:80";
+
 
 let editandoId = null;
 
@@ -37,6 +38,8 @@ const cartTotal = document.getElementById("cartTotal");
 const cartToast = document.getElementById("cartToast");
 const btnConfirmarCompra = document.getElementById("btnConfirmarCompra");
 const btnVaciarCarrito = document.getElementById("btnVaciarCarrito");
+const PEDIDOS_API = "/api/pedidos";
+
 let catalogoActual = [];
 let carrito = [];
 let cartToastTimer = null;
@@ -46,10 +49,6 @@ async function apiFetch(url, options = {}) {
   const headers = new Headers(options.headers || {});
   headers.set("Authorization", `Bearer ${accessToken}`);
   return fetch(url, { ...options, headers });
-}
-
-function escapeHtml(valor) {
-  return String(valor ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
 function setStatus(mensaje, tipo = "ok") {
@@ -69,7 +68,7 @@ function setAccessStatus(mensaje, tipo = "error") {
 
 async function cargarProductos() {
   try {
-    const res = await apiFetch(PRODUCTOS_API);
+    const res = await apiFetch(API_BASE);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.message || `Error al cargar productos (${res.status}).`);
@@ -89,11 +88,11 @@ function renderProductos(productos) {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${escapeHtml(p.id)}</td>
-      <td>${escapeHtml(p.nombre)}</td>
-      <td>${escapeHtml(p.descripcion)}</td>
+      <td>${p.id}</td>
+      <td>${p.nombre}</td>
+      <td>${p.descripcion || ""}</td>
       <td>$${Number(p.precio).toFixed(2)}</td>
-      <td>${escapeHtml(p.stock)}</td>
+      <td>${p.stock}</td>
       <td>
         <button data-id="${p.id}" class="btn-editar">Editar</button>
         <button data-id="${p.id}" class="btn-eliminar danger">Eliminar</button>
@@ -127,10 +126,10 @@ function renderCatalogo(productos) {
   productos.forEach((producto) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHtml(producto.nombre)}</td>
-      <td>${escapeHtml(producto.descripcion)}</td>
+      <td>${producto.nombre}</td>
+      <td>${producto.descripcion || ""}</td>
       <td>$${Number(producto.precio).toFixed(2)}</td>
-      <td>${escapeHtml(producto.stock)}</td>
+      <td>${producto.stock}</td>
       <td><button class="btn-comprar" data-id="${producto.id}" ${producto.stock <= 0 ? "disabled" : ""}>Comprar</button></td>
     `;
     tbodyCatalogo.appendChild(tr);
@@ -146,8 +145,8 @@ function renderPedidos(pedidos) {
   pedidos.forEach((pedido) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHtml(pedido.producto)}</td>
-      <td>${escapeHtml(pedido.cantidad)}</td>
+      <td>${pedido.producto}</td>
+      <td>${pedido.cantidad}</td>
       <td>$${Number(pedido.precio_unitario).toFixed(2)}</td>
       <td>${new Date(pedido.created_at).toLocaleString()}</td>
     `;
@@ -157,7 +156,7 @@ function renderPedidos(pedidos) {
 
 async function cargarCatalogo() {
   try {
-    const response = await apiFetch(PRODUCTOS_API);
+    const response = await apiFetch(API_BASE);
     if (!response.ok) throw new Error("No se pudo cargar el catálogo.");
     renderCatalogo(await response.json());
   } catch (error) {
@@ -304,14 +303,14 @@ async function guardarProducto() {
     let res;
     if (editandoId) {
       // Actualizar
-      res = await apiFetch(`${PRODUCTOS_API}/${editandoId}`, {
+      res = await apiFetch(`${API_BASE}/${editandoId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(producto),
       });
     } else {
       // Crear
-      res = await apiFetch(PRODUCTOS_API, {
+      res = await apiFetch(API_BASE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(producto),
@@ -334,7 +333,7 @@ async function guardarProducto() {
 
 async function editarProducto(id) {
   try {
-    const res = await apiFetch(`${PRODUCTOS_API}/${id}`);
+    const res = await apiFetch(`${API_BASE}/${id}`);
     if (!res.ok) throw new Error("No se pudo obtener el producto");
     const p = await res.json();
     editandoId = p.id;
@@ -352,7 +351,7 @@ async function editarProducto(id) {
 
 async function eliminarProducto(id) {
   try {
-    const res = await apiFetch(`${PRODUCTOS_API}/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`${API_BASE}/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Error al eliminar producto");
     await cargarProductos();
     setStatus("Producto eliminado correctamente.", "ok");
