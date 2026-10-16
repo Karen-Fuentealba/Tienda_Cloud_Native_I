@@ -42,18 +42,17 @@ jobs:
           sudo docker network create tienda-net || true
           
           # Levantar contenedor backend
-          sudo docker run -d --restart unless-stopped --name tienda-backend --network tienda-net -p 3001:3001 \
-            -e MYSQL_HOST=tienda-db \
-            -e MYSQL_USER=${{ secrets.MYSQL_USER }} \
-            -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-            -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
-            -e MYSQL_PORT=3306 \
-            -e AAD_TENANT_ID=${{ secrets.AAD_TENANT_ID }} \
-            -e AAD_AUDIENCE=${{ secrets.AAD_AUDIENCE }} \
-            -e AAD_AUTHORITY=https://login.microsoftonline.com/${{ secrets.AAD_TENANT_ID }} \
-            -e AAD_EXTERNAL_TENANT_ID=${{ secrets.AAD_EXTERNAL_TENANT_ID }} \
-            -e AAD_EXTERNAL_AUDIENCE=${{ secrets.AAD_EXTERNAL_AUDIENCE }} \
-            -e AAD_EXTERNAL_AUTHORITY_HOST=${{ secrets.AAD_EXTERNAL_AUTHORITY_HOST }} \
-            tienda-backend:latest
+          sudo docker run -d --restart unless-stopped --name tienda-db --network tienda-net -p 3306:3306 \
+          -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
+          -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
+          -e MYSQL_USER=${{ secrets.MYSQL_USER }} \
+          -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \      
+          -e AAD_TENANT_ID=${{ secrets.AAD_TENANT_ID }} \
+          -e AAD_AUDIENCE=${{ secrets.AAD_AUDIENCE }} \
+          -e AAD_AUTHORITY=https://login.microsoftonline.com/${{ secrets.AAD_TENANT_ID }} \
+          -e AAD_EXTERNAL_TENANT_ID=${{ secrets.AAD_EXTERNAL_TENANT_ID }} \
+          -e AAD_EXTERNAL_AUDIENCE=${{ secrets.AAD_EXTERNAL_AUDIENCE }} \
+          -e AAD_EXTERNAL_AUTHORITY_HOST=${{ secrets.AAD_EXTERNAL_AUTHORITY_HOST }} \
+          tienda-backend:latest
 
 
