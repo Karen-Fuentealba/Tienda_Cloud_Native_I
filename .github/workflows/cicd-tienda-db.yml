@@ -46,6 +46,7 @@ jobs:
           -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
           -e MYSQL_USER=${{ secrets.MYSQL_USER }} \
           -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+          -e MYSQL_PORT=${{ secrets.MYSQL_PORT }} \
           tienda-db:latest
 
 
