@@ -42,11 +42,10 @@ jobs:
           
           # Levantar contenedor de la base de datos
           sudo docker run -d --restart unless-stopped --name tienda-db --network tienda-net -p 3306:3306 \
-            -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
-            -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
-            -e MYSQL_USER=${{ secrets.MYSQL_USER }} \
-            -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-            tienda-db:latest
-
+          -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
+          -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
+          -e MYSQL_USER=${{ secrets.MYSQL_USER }} \
+          -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+          tienda-db:latest
 
 
