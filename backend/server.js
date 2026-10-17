@@ -17,13 +17,13 @@ const PORT = process.env.PORT || 3001;
   DB_PORT = 3306,
 } = process.env; */
 
-const {
+/*const {
   MYSQL_HOST = "db",
   MYSQL_USER = "admindb",
   MYSQL_PASSWORD = "admin123",
   MYSQL_DATABASE = "tienda_perritos",
   MYSQL_PORT = 3306,
-} = process.env;
+} = process.env; */
 
 const DB_HOST = MYSQL_HOST;
 const DB_USER = MYSQL_USER;
