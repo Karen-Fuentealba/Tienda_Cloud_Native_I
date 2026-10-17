@@ -146,16 +146,19 @@ const identityProviders = [
     audience: acceptedAudiences(process.env.AAD_AUDIENCE),
     issuer: `https://login.microsoftonline.com/${internalTenantId}/v2.0`,
     client: createJwksClient(`https://login.microsoftonline.com/${internalTenantId}/discovery/v2.0/keys`),
+    type: "internal"
   },
   {
     audience: acceptedAudiences(process.env.AAD_AUDIENCE),
     issuer: `https://sts.windows.net/${internalTenantId}/`,
     client: createJwksClient(`https://login.microsoftonline.com/${internalTenantId}/discovery/v2.0/keys`),
+    type: "internal"
   },
   {
     audience: acceptedAudiences(process.env.AAD_EXTERNAL_AUDIENCE),
     issuer: `https://${externalTenantId}.ciamlogin.com/${externalTenantId}/v2.0`,
     client: createJwksClient(`https://${externalAuthorityHost}/${externalTenantId}/discovery/v2.0/keys`),
+    type: "external"
   },
 ];
 
@@ -202,9 +205,17 @@ function checkJwt(req, res, next) {
         return res.status(401).json({ message: "Token inválido o expirado." });
       }
 
-      // Validar scope
-      if (!verifiedToken.scp || !verifiedToken.scp.includes("access_as_user_client")) {
-        return res.status(403).json({ message: "Scope inválido." });
+      // Validar scope según tipo de tenant
+      if (identityProvider.type === "internal") {
+        if (!verifiedToken.scp || !verifiedToken.scp.includes("access_as_user")) {
+          return res.status(403).json({ message: "Scope inválido para admin." });
+        }
+      }
+
+      if (identityProvider.type === "external") {
+        if (!verifiedToken.scp || !verifiedToken.scp.includes("access_as_user_client")) {
+          return res.status(403).json({ message: "Scope inválido para cliente." });
+        }
       }
 
       // Validar roles
