@@ -1,9 +1,6 @@
 
 const API_BASE = "/api/productos";
 
-// Ejemplo: const API_BASE = "http://34.202.142.177:80";
-
-
 let editandoId = null;
 
 const tbody = document.getElementById("tbodyProductos");
