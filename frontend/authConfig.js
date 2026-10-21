@@ -22,7 +22,7 @@ const authConfig = {
     msal: {
       auth: {
         clientId: "a64dfa50-28aa-4285-b102-9d60c5d30f45",
-        authority: "https://karen004v.ciamlogin.com/b5253255-4e61-4557-bf3f-661f8dc60447",
+        authority: "https://karen004v.ciamlogin.com/b5253255-4e61-4557-bf3f-661f8dc60447/Karen007V",
         knownAuthorities: ["karen004v.ciamlogin.com"],
         redirectUri: "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod/",
       //  redirectUri: window.location.origin,
