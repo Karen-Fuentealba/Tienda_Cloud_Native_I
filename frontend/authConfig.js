@@ -6,7 +6,7 @@ const authConfig = {
         authority: "https://login.microsoftonline.com/ea6b8b9d-33ce-49ad-95e6-551bce054fe7",
         redirectUri: "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod/",
         //redirectUri: window.location.origin,
-        postLogoutRedirectUri: "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod/",
+        postLogoutRedirectUri: "https://uzhnb8lls6.execute-api.us-east-1.amazonaws.com/prod/index.html",
         // window.location.origin,
       },
       cache: {
