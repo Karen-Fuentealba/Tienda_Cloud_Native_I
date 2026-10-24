@@ -14,7 +14,7 @@ Proyecto fullstack desplegado en **AWS** y **Azure Entra ID**, que integra auten
 ---
 
 ##  Clonar el repositorio
-```bash
+
 git clone https://github.com/<tu_usuario>/<tu_repositorio>.git
 cd <tu_repositorio>
 
@@ -23,7 +23,6 @@ Instala Docker Desktop y asegúrate de que esté corriendo.
 
 Ejecuta:
 
-bash
 docker-compose up --build
 Accede al frontend en http://localhost:80 y al backend en http://localhost:3001.
 
