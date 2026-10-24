@@ -14,7 +14,7 @@ Proyecto fullstack desplegado en **AWS** y **Azure Entra ID**, que integra auten
 ---
 
 ##  Clonar el repositorio
-
+bash
 git clone https://github.com/<tu_usuario>/<tu_repositorio>.git
 cd <tu_repositorio>
 
