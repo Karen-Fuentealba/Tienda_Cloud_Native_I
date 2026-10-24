@@ -1,10 +1,10 @@
-# Tienda de Perritos
+# 🐾 Tienda de Perritos
 
 Proyecto fullstack desplegado en **AWS** y **Azure Entra ID**, que integra autenticación híbrida (administradores internos y clientes externos) y comunicación segura entre frontend, backend y base de datos.
 
 ---
 
-##  Tecnologías principales
+## 🚀 Tecnologías principales
 - **Frontend:** React / Nginx / Docker
 - **Backend:** Node.js / Express / MySQL
 - **Infraestructura:** AWS EC2, API Gateway, Elastic IP
@@ -13,21 +13,21 @@ Proyecto fullstack desplegado en **AWS** y **Azure Entra ID**, que integra auten
 
 ---
 
-##  Clonar el repositorio
-
+## 📦 Clonar el repositorio
+```bash
 git clone https://github.com/<tu_usuario>/<tu_repositorio>.git
 cd <tu_repositorio>
-
-Levantar el proyecto localmente
+🐳 Levantar el proyecto localmente
 Instala Docker Desktop y asegúrate de que esté corriendo.
 
 Ejecuta:
 
+bash
 docker-compose up --build
 Accede al frontend en http://localhost:80 y al backend en http://localhost:3001.
 
- Configuración en AWS
- EC2
+☁️ Configuración en AWS
+🔹 EC2
 Crea dos instancias EC2 (una para frontend y otra para backend).
 
 Asigna Elastic IPs a ambas.
@@ -40,7 +40,7 @@ Backend: 3001
 
 Sube tus imágenes Docker o usa docker-compose directamente en cada instancia.
 
-API Gateway
+🔹 API Gateway
 Crea un REST API.
 
 Configura las rutas:
@@ -53,7 +53,7 @@ Crea un Stage llamado prod.
 
 Copia el Invoke URL para usarlo en la configuración de Azure.
 
- Configuración en Azure Entra ID
+🔐 Configuración en Azure Entra ID
 🔹 Tenant interno (administradores)
 Registra una aplicación SPA.
 
@@ -84,8 +84,7 @@ export const msalConfig = {
     redirectUri: "https://<api-id>.execute-api.<region>.amazonaws.com/prod"
   }
 };
-
-Base de datos MySQL
+🗄️ Base de datos MySQL
 Usa Docker o una instancia EC2.
 
 Variables de entorno:
@@ -96,8 +95,7 @@ DB_PORT=3306
 DB_NAME=tienda_perritos
 DB_USER=alumno
 DB_PASSWORD=alumno123
-
-Variables de entorno (GitHub Actions)
+🔧 Variables de entorno (GitHub Actions)
 Configura los siguientes Secrets en tu repositorio:
 
 Nombre	Descripción
@@ -113,8 +111,7 @@ DB_USER	Usuario de la base de datos
 DB_PASSWORD	Contraseña de la base de datos
 
 
-Pruebas finales
-
+✅ Pruebas finales
 Accede al frontend desde el Invoke URL de API Gateway.
 
 Inicia sesión con usuario administrador o cliente.
@@ -123,5 +120,5 @@ Verifica conexión con backend y base de datos.
 
 Comprueba que las rutas /api/productos y /api/pedidos respondan correctamente.
 
-Resultado
+🏁 Resultado
 Arquitectura funcional desplegada en AWS y Azure con autenticación híbrida, comunicación segura y base de datos operativa.
